@@ -17,7 +17,7 @@ sed -e "s/MYBB_DBNAME/${DB_NAME}/g" -e "s/MYBB_DBUSERNAME/${DB_USER_NAME}/g" -e 
 sed -e "s/MYBB_ADMINEMAIL/${ADMIN_EMAIL}/g" -e "s/MYBB_DOMAINNAME/${DOMAIN_NAME}/g" "${CODE_DIR}/mybb.sql" 
 
 # populate database
-mysql --user="$DB_USER_NAME" --password="$DB_PASSWORD" --host="$DB_HOST_NAME" --port="$DB_PORT" --database="$DB_NAME" < "${CONFIG}/mybb.sql" || echo "Schema Already Exists!"
+mysql --user="$DB_USER_NAME" --password="$DB_PASSWORD" --host="$DB_HOST_NAME" --port="$DB_PORT" --database="$DB_NAME" < "${CODE_DIR}/mybb.sql" || echo "Schema Already Exists!"
 
 # Set permissions
 cd "$INSTALL_DIR"
