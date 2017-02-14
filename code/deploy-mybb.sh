@@ -4,7 +4,7 @@
 INSTALL_DIR="/var/www/html"
 
 rm -rf "$INSTALL_DIR"/*
-unzip "./code/mybb_1810.zip"
+unzip "./code/mybb_1809.zip"
 cp -r ./Upload/* "$INSTALL_DIR"/
 
 # Configure mybb with parameters passed from command line
