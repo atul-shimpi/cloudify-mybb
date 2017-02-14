@@ -1,15 +1,20 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
-
-  "Description" : "AWS CloudFormation Template for deploying MYBB application in AWS with high available, secure and scalable infraestructure.",
+  "Description" : "MyBB Deployment",
 
   "Parameters" : {
-
+    "Environment" : {
+      "Default": "Demo",
+      "Description" : "Deployment environment",
+      "Type" : "String",
+      "AllowedValues" : [ "Demo", "Dev", "Test", "Staging", "Production (Multi-AZ Database)" ]
+    },
+  
     "KeyName" : {
       "Default": "mybb",
-      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+      "Description" : "EC2 Keypair name to enable SSH access to the instances",
       "Type" : "AWS::EC2::KeyPair::KeyName",
-      "ConstraintDescription" : "must be the name of an existing EC2 KeyPair."
+      "ConstraintDescription" : "Keypair must be existing in the same region as deployment"
     },
 
     "SSHLocation" : {
@@ -19,7 +24,7 @@
       "MaxLength": "18",
       "Default" : "0.0.0.0/0",
       "AllowedPattern" : "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
-      "ConstraintDescription" : "must be a valid CIDR range of the form x.x.x.x/x."
+      "ConstraintDescription" : "Must be a valid CIDR range of the form x.x.x.x/x."
     },
 
     "WebServerInstanceType" : {
@@ -27,12 +32,12 @@
       "Type" : "String",
       "Default" : "t2.micro",
       "AllowedValues" : [ "t1.micro", "t2.nano", "t2.micro", "t2.small", "t2.medium", "t2.large", "m1.small", "m1.medium", "m1.large", "m1.xlarge", "m2.xlarge", "m2.2xlarge", "m2.4xlarge", "m3.medium", "m3.large", "m3.xlarge", "m3.2xlarge", "m4.large", "m4.xlarge", "m4.2xlarge", "m4.4xlarge", "m4.10xlarge", "c1.medium", "c1.xlarge", "c3.large", "c3.xlarge", "c3.2xlarge", "c3.4xlarge", "c3.8xlarge", "c4.large", "c4.xlarge", "c4.2xlarge", "c4.4xlarge", "c4.8xlarge", "g2.2xlarge", "g2.8xlarge", "r3.large", "r3.xlarge", "r3.2xlarge", "r3.4xlarge", "r3.8xlarge", "i2.xlarge", "i2.2xlarge", "i2.4xlarge", "i2.8xlarge", "d2.xlarge", "d2.2xlarge", "d2.4xlarge", "d2.8xlarge", "hi1.4xlarge", "hs1.8xlarge", "cr1.8xlarge", "cc2.8xlarge", "cg1.4xlarge"],
-      "ConstraintDescription" : "must be a valid EC2 instance type."
+      "ConstraintDescription" : "Must be a valid EC2 instance type."
     },
 
-    "AdministratorEmail": {
+    "SupportEmail": {
       "Default": "shimpiatul@hotmail.com",
-      "Description": "E-Mail address to notify for autoscaling operations in course.",
+      "Description": "Autoscaling notifications will be sent to this mail",
       "Type": "String",
       "AllowedPattern": "([a-zA-Z0-9_\\-\\.]+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)",
       "ConstraintDescription": "Must be a valid email address."
@@ -41,7 +46,7 @@
     "WebServerCount" : {
       "Description" : "Number of EC2 instances to launch for the WebServer server",
       "Type" : "Number",
-      "Default" : "2"
+      "Default" : 2
     },
 
     "DBName": {
@@ -74,23 +79,6 @@
       "ConstraintDescription" : "must contain only alphanumeric characters"
     },
 
-    "DBAllocatedStorage": {
-      "Default": "5",
-      "Description" : "The size of the database (Gb)",
-      "Type": "Number",
-      "MinValue": "5",
-      "MaxValue": "1024",
-      "ConstraintDescription" : "must be between 5 and 1024Gb."
-    },
-
-    "DBInstanceClass": {
-      "Description" : "The database instance type",
-      "Type": "String",
-      "Default": "db.t1.micro",
-      "AllowedValues" : [ "db.t1.micro", "db.m1.small", "db.m1.medium", "db.m1.large", "db.m1.xlarge", "db.m2.xlarge", "db.m2.2xlarge", "db.m2.4xlarge", "db.m3.medium", "db.m3.large", "db.m3.xlarge", "db.m3.2xlarge", "db.m4.large", "db.m4.xlarge", "db.m4.2xlarge", "db.m4.4xlarge", "db.m4.10xlarge", "db.r3.large", "db.r3.xlarge", "db.r3.2xlarge", "db.r3.4xlarge", "db.r3.8xlarge", "db.m2.xlarge", "db.m2.2xlarge", "db.m2.4xlarge", "db.cr1.8xlarge", "db.t2.micro", "db.t2.small", "db.t2.medium", "db.t2.large"],
-      "ConstraintDescription" : "must select a valid database instance type."
-    },
-
     "DBPort": {
       "Type": "Number",
       "Description": "The port number where MyBB will connect to the database.",
@@ -98,17 +86,13 @@
       "MaxValue": "65536",
       "Default": 3306,
       "ConstraintDescription": "Must be a valid (non-restricted) port number!"
-    },
-
-    "MultiAZ" : {
-      "Description" : "Multi-AZ master database",
-      "Type" : "String",
-      "Default" : "true",
-      "AllowedValues" : [ "true", "false" ],
-      "ConstraintDescription" : "must be true or false."
     }
   },
 
+   "Conditions" : {
+    "CreateProdResources" : {"Fn::Equals" : [{"Ref" : "Environment"}, "Production (Multi-AZ Database)"]}
+  },
+    
   "Mappings" : {
     "SubnetConfig" : {
       "VPC"     : { "CIDR" : "10.0.0.0/16" },
@@ -574,7 +558,7 @@
       "Type": "AWS::SNS::Topic",
       "Properties": {
         "Subscription": [{
-          "Endpoint": { "Ref": "AdministratorEmail" },
+          "Endpoint": { "Ref": "SupportEmail" },
           "Protocol": "email"
         }]
       }
@@ -801,7 +785,7 @@
                   "DB_HOST_NAME": { "Fn::GetAtt": [ "MySQLDatabase", "Endpoint.Address" ] },
                   "DB_PORT": { "Ref": "DBPort" },                  
                   "DOMAIN_NAME": { "Fn::GetAtt": [ "PublicElasticLoadBalancer", "DNSName" ] },
-                  "ADMIN_EMAIL": { "Ref": "AdministratorEmail" }
+                  "ADMIN_EMAIL": { "Ref": "SupportEmail" }
                 }
               }
             },
@@ -886,12 +870,12 @@
     "MySQLDatabase": {
       "Type": "AWS::RDS::DBInstance",
       "Properties": {
-        "AllocatedStorage": { "Ref" : "DBAllocatedStorage" },
-        "DBInstanceClass": { "Ref" : "DBInstanceClass" },
+        "AllocatedStorage": { "Fn::If" : [ "CreateProdResources", "100", "10" ]},
+        "DBInstanceClass":  "db.t1.micro",
         "DBName" : { "Ref": "DBName" },
         "DBSubnetGroupName" : { "Ref" : "DBSubnetGroup" },
         "Engine" : "MySQL",
-        "MultiAZ" : { "Ref": "MultiAZ" },
+        "MultiAZ" : { "Fn::If" : [ "CreateProdResources", true, false ]},
         "MasterUsername": { "Ref": "DBUser" },
         "MasterUserPassword": { "Ref" : "DBPassword" },
         "VPCSecurityGroups" : [ { "Fn::GetAtt": [ "DBEC2SecurityGroup", "GroupId" ] } ]
@@ -907,11 +891,11 @@
 
   "Outputs" : {
     "WebSite" : {
-      "Description" : "URL of the website",
+      "Description" : "MyBB Url",
       "Value" :  { "Fn::Join" : [ "", [ "http://", { "Fn::GetAtt" : [ "PublicElasticLoadBalancer", "DNSName" ]}]]}
     },
     "Database" : {
-      "Description" : "URL of the database",
+      "Description" : "MyBB Database Url",
       "Value" :  { "Fn::Join" : [ "", [ "http://", { "Fn::GetAtt": [ "MySQLDatabase", "Endpoint.Address" ]}]]}
     }
   }
