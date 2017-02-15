@@ -29,12 +29,6 @@ Below I provide a brief description of these files and directories:
 1. Monitoring system.
 
 
-# Known Issues
-Some old AWS accounts have issues while listing AZ using Instinsic cloudformation templates
-Example - AWS function for listing all zones in an region may list all the zones, but they may
-not be available. This is known issues. Accounts create in last 3-4 months may not have this issue
-
-
 # Feedback
 
 This assignment helped me to judge myself in how much technically skilled I am and whether I am able
